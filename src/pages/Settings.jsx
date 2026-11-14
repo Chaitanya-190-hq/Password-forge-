@@ -3,7 +3,9 @@ import { Link } from 'react-router-dom';
 import {
   Activity,
   Database,
+  Download,
   Gauge,
+  MonitorSmartphone,
   RefreshCw,
   RotateCcw,
   Settings2,
@@ -13,6 +15,7 @@ import {
 import { ITERATION_OPTIONS, measureKdf } from '../lib/crypto.js';
 import { AUTO_LOCK_OPTIONS } from '../lib/settings.js';
 import { destroyVault, vaultInfo } from '../lib/vault.js';
+import { useInstallPrompt } from '../lib/pwa.js';
 import { useSettings } from '../components/SettingsContext.jsx';
 import { useToast } from '../components/Toast.jsx';
 import {
@@ -50,6 +53,7 @@ export default function Settings() {
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [deleteConfirm, setDeleteConfirm] = useState('');
   const [busy, setBusy] = useState(false);
+  const install = useInstallPrompt();
 
   const support = {
     subtle: typeof crypto !== 'undefined' && Boolean(crypto.subtle),
@@ -99,6 +103,13 @@ export default function Settings() {
     } finally {
       setBusy(false);
     }
+  }
+
+  async function handleInstall() {
+    const outcome = await install.install();
+    if (outcome === 'accepted') notify('Installation started. The app will open in its own window.', 'success');
+    else if (outcome === 'dismissed') notify('Installation dismissed. You can install later from the browser menu.', 'info');
+    else notify('Use your browser menu to install this app.', 'info');
   }
 
   const rec = recommendation();
@@ -250,6 +261,43 @@ export default function Settings() {
 
         <div className="space-y-5">
           <Panel>
+            <SectionTitle
+              title="Install as an app"
+              hint="Adds Password Forge to your desktop or home screen and enables offline use."
+              action={<MonitorSmartphone size={15} className="text-muted/60" aria-hidden="true" />}
+            />
+            {install.installed ? (
+              <Notice tone="success" title="Running as an installed app">
+                Password Forge is in standalone mode with the app shell cached. Reload while online to receive
+                an update; your vault and settings are unaffected.
+              </Notice>
+            ) : (
+              <>
+                <p className="text-[12px] leading-relaxed text-muted">
+                  Installing launches Password Forge in its own window and lets it run offline. It stays the same
+                  local-only application: no account, no store listing, no server.
+                </p>
+                {install.canInstall ? (
+                  <Button variant="primary" icon={Download} className="mt-4" onClick={handleInstall}>
+                    Install Password Forge
+                  </Button>
+                ) : (
+                  <div className="mt-4 space-y-2 rounded-lg border border-line bg-ink/40 px-3.5 py-3 text-[11.5px] leading-relaxed text-muted">
+                    <p className="text-parchment/85">Install from your browser</p>
+                    <p>Chrome / Edge: use the install icon in the address bar, or Menu → Apps → Install this site as an app.</p>
+                    <p>Safari on macOS: File → Add to Dock. On iPhone or iPad: Share → Add to Home Screen.</p>
+                    {!install.serviceWorkerSupported && (
+                      <p className="text-warn/90">
+                        This browser does not support service workers, so offline use is unavailable.
+                      </p>
+                    )}
+                  </div>
+                )}
+              </>
+            )}
+          </Panel>
+
+          <Panel>
             <SectionTitle title="Environment" hint="Capabilities checked in this tab, right now." />
             <div>
               <SupportRow label="Web Crypto (SubtleCrypto)" ok={support.subtle} detail="AES-GCM, PBKDF2, digests, HMAC" />
@@ -274,7 +322,7 @@ export default function Settings() {
                 { label: 'Sidebar state', value: 'password-forge.sidebar.collapsed' },
                 { label: 'Analytics', value: 'none' },
                 { label: 'Cookies', value: 'none' },
-                { label: 'Service worker', value: 'none' },
+                { label: 'Service worker', value: 'app-shell cache' },
               ]}
             />
             <p className="mt-3 text-[11px] leading-relaxed text-muted/80">

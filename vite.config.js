@@ -1,3 +1,4 @@
+import { readFileSync } from 'node:fs';
 import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
 
@@ -14,6 +15,7 @@ function contentSecurityPolicy() {
     "style-src 'self' 'unsafe-inline'",
     "img-src 'self' data: blob:",
     "font-src 'self' data:",
+    "manifest-src 'self'",
     // The only optional external request in the whole app: the breach-check API.
     "connect-src 'self' https://api.pwnedpasswords.com",
     "object-src 'none'",
@@ -37,6 +39,40 @@ function contentSecurityPolicy() {
   };
 }
 
+/**
+ * Emits a service worker with a unique cache name per build and the exact list
+ * of hashed assets to precache, so the installed app works offline after the
+ * first visit. A new deployment installs a new worker, then drops old caches.
+ */
+function serviceWorker() {
+  return {
+    name: 'password-forge-service-worker',
+    apply: 'build',
+    generateBundle(_options, bundle) {
+      const shell = [
+        './',
+        './index.html',
+        './manifest.webmanifest',
+        './icons/icon-192.png',
+        './icons/icon-512.png',
+        './icons/icon-maskable-512.png',
+        './icons/apple-touch-icon.png',
+      ];
+      const built = Object.keys(bundle)
+        .filter((file) => /\.(js|css|woff2?|png|svg)$/.test(file))
+        .map((file) => `./${file}`);
+
+      const precache = Array.from(new Set([...shell, ...built]));
+      const template = readFileSync(new URL('./pwa/sw.js', import.meta.url), 'utf8');
+      const source = template
+        .replaceAll('__BUILD_ID__', Date.now().toString(36))
+        .replaceAll('__PRECACHE__', JSON.stringify(precache, null, 2));
+
+      this.emitFile({ type: 'asset', fileName: 'sw.js', source });
+    },
+  };
+}
+
 // Optional exact dev-server hostnames for hosted previews (comma separated).
 // Never a wildcard: an explicit list keeps DNS-rebinding protection intact.
 const allowedHosts = (process.env.VITE_DEV_ALLOWED_HOSTS || '')
@@ -48,8 +84,9 @@ export default defineConfig({
   // Relative base + HashRouter keeps the app working on any GitHub Pages path
   // (user pages, project pages, custom domains) without server rewrites.
   base: './',
-  plugins: [react(), contentSecurityPolicy()],
+  plugins: [react(), contentSecurityPolicy(), serviceWorker()],
   server: { allowedHosts },
+  preview: { allowedHosts },
   build: {
     outDir: 'dist',
     sourcemap: false,

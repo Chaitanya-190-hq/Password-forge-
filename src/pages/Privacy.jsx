@@ -18,6 +18,11 @@ const LOCAL_DATA = [
   { label: 'Preferences (KDF cost, auto-lock, clipboard)', where: 'localStorage', persisted: 'Non-secret' },
   { label: 'Sidebar collapsed state', where: 'localStorage', persisted: 'Non-secret' },
   { label: 'Generated keys and tokens', where: 'React state (memory)', persisted: 'No' },
+  {
+    label: 'Installed app shell (HTML, JS, CSS, icons)',
+    where: 'Cache Storage (service worker)',
+    persisted: 'Static files only',
+  },
 ];
 
 export default function Privacy() {
@@ -138,7 +143,9 @@ export default function Privacy() {
               any website and contains none of your inputs.
             </p>
             <p className="mt-2 text-[12px] leading-relaxed text-muted">
-              There are no cookies, no service worker, no fingerprinting scripts and no third-party resources.
+              There are no cookies, no fingerprinting scripts and no third-party resources. A service worker
+              caches only first-party static files (HTML, JavaScript, CSS and icons) so the installed app can run
+              offline. It never caches passwords, plaintext, vault records, clipboard content or request bodies.
               Passwords are never placed in a URL, a hash fragment, a page title or browser history.
             </p>
           </Panel>

@@ -41,6 +41,26 @@ script-src 'self' 'wasm-unsafe-eval'
 connect-src 'self' https://api.pwnedpasswords.com
 ```
 
+### Installable web app (PWA)
+
+Password Forge can be installed to the desktop, an Android home screen or an iOS home screen, launching in
+its own window and working offline after the first visit.
+
+* `public/manifest.webmanifest` declares the name, colours, standalone display, icons and three shortcuts
+  (Forge, Encrypt, Vault). `start_url`/`scope` are relative, so the same file works at a GitHub Pages
+  subpath.
+* Icons are generated from `scripts/generate-icons.py` (Pillow) into `public/icons/`: 192 px, 512 px, a
+  maskable 512 px and an Apple touch icon. Regenerate with `python3 scripts/generate-icons.py`.
+* `pwa/sw.js` is a build template. `vite.config.js` injects a unique build id and the exact list of hashed
+  assets into it, then emits `dist/sw.js`.
+* Registration lives in `src/lib/pwa.js` and runs only in production builds, so the dev server is never
+  cached. `initPwa()` also captures `beforeinstallprompt` for the Install button in Settings.
+
+Caching rules are deliberately narrow: same-origin `GET` requests only, navigations are network-first with a
+cached `index.html` fallback, and static assets are cache-first. Vault data lives in IndexedDB and is never
+placed in the Cache Storage API; the optional breach-check request is cross-origin and explicitly bypassed.
+A new deployment installs a new worker (new cache name) and deletes the previous caches on activation.
+
 ## Workspaces
 
 | Route | Workspace | What it does |
@@ -168,6 +188,8 @@ are not included.
 * File inputs are size-limited (2 MiB text / 10 MiB files for encryption, 25 MiB for hashing, 24 MiB envelopes).
 * The only network request in the entire app is the opt-in breach check, which sends a 5-character SHA-1 hash
   prefix to `api.pwnedpasswords.com` and is disabled until the user explicitly consents.
+* The service worker caches only first-party static files. It never sees vault records (IndexedDB), form
+  values or clipboard content, and it ignores cross-origin requests entirely.
 * Dependencies: React, React Router, Lucide (icons), hash-wasm (Argon2id), Tailwind (build-time). No analytics,
   no tracking, no auth service.
 
@@ -186,6 +208,10 @@ are not included.
 * **Breach checking** depends on a third-party service and its dataset. It reports nothing about credential
   reuse elsewhere, phishing or non-public breaches.
 * **Argon2id in the browser** is educational; real authentication belongs on a server with rate limiting.
+* **PWA updates** apply on the next online load after a deployment; an already-open tab keeps the old
+  bundle until it is reloaded.
+* **Offline mode** covers the application shell only. Data held in memory (inspections, plaintext, audit
+  samples) is not restored offline because it is never persisted.
 * **Heuristic strength scores** are pattern-based estimates, never guarantees.
 
 ## Privacy

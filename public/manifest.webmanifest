@@ -1,0 +1,59 @@
+{
+  "id": "./",
+  "name": "Password Forge — Cryptography Workstation",
+  "short_name": "Password Forge",
+  "description": "Local-first cryptography workstation: generate, inspect, encrypt, hash and store secrets without a backend.",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "display_override": ["standalone", "minimal-ui"],
+  "orientation": "any",
+  "background_color": "#111216",
+  "theme_color": "#111216",
+  "lang": "en",
+  "dir": "ltr",
+  "categories": ["security", "productivity", "utilities"],
+  "icons": [
+    {
+      "src": "icons/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "icons/icon-maskable-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Forge a password",
+      "short_name": "Forge",
+      "description": "Generate random passwords and passphrases",
+      "url": "./#/forge",
+      "icons": [{ "src": "icons/icon-192.png", "sizes": "192x192", "type": "image/png" }]
+    },
+    {
+      "name": "Encrypt text",
+      "short_name": "Encrypt",
+      "description": "AES-256-GCM encryption workspace",
+      "url": "./#/encrypt",
+      "icons": [{ "src": "icons/icon-192.png", "sizes": "192x192", "type": "image/png" }]
+    },
+    {
+      "name": "Open encrypted vault",
+      "short_name": "Vault",
+      "description": "Unlock the local encrypted credential vault",
+      "url": "./#/vault",
+      "icons": [{ "src": "icons/icon-192.png", "sizes": "192x192", "type": "image/png" }]
+    }
+  ]
+}
