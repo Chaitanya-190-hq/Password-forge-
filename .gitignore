@@ -1,0 +1,14 @@
+node_modules/
+dist/
+artifacts/
+dist-ssr/
+coverage/
+*.local
+*.log
+.DS_Store
+.vite/
+
+# Never commit real secrets. This app needs none at build time.
+.env
+.env.*
+!.env.example
