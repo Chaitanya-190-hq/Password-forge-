@@ -19,7 +19,9 @@ function contentSecurityPolicy() {
     "object-src 'none'",
     "base-uri 'self'",
     "form-action 'none'",
-    "frame-ancestors 'none'",
+    // frame-ancestors is intentionally omitted: browsers ignore it in a <meta>
+    // policy and log an error. Clickjacking protection needs a real HTTP header,
+    // which GitHub Pages cannot send.
     "worker-src 'self' blob:",
   ].join('; ');
 
